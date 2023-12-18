@@ -50,7 +50,7 @@ Designed to request proofs from the Reclaim protocol and manage the flow of clai
 
 ## Dependency Diagram
 
-<img src='./readme/dep-diagram-reactnative.svg' width='600' />
+<img src='./readme/dep-diagram-reactnative-2.svg' width='600' />
 
 ## Error Codes
 
