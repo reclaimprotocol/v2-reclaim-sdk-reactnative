@@ -6,7 +6,7 @@ Designed to request proofs from the Reclaim protocol and manage the flow of clai
 
 - ### Reclaim Interface
 
-  - #### `requestProof(request: ProofRequest): void`
+  - #### `requestProof(request: ProofRequest):`
 
     Requests proof using the provided proof request.
 
@@ -17,13 +17,12 @@ Designed to request proofs from the Reclaim protocol and manage the flow of clai
 - ### ProofRequest Interface
 
   - **title:** `string` - Title of the request
-  - **requestedProofs:** `HttpsProviderV2[]` - Proofs requested by the application
+  - **requestedProofs:** `ProviderV2[]` - Proofs requested by the application
   - **contextMessage?:** `string` - Context message for the proof request
   - **contextAddress?:** `string` - Context address for the proof request (can be zero address)
-  - **requestorAddress?:** `string` - Master wallet address of the requestor
-  - **requestorPublicKey?:** `string` - Ephemeral public key of the requestor
+  - **requestorSignature?:** `string` - Signature of the requestor
 
-- ### HttpsProviderV2 Interface:
+- ### ProviderV2 Interface:
 
   - **headers?:** `Map<string, string>` _(Any additional headers to be sent with the request)_
   - **url:** `string` _(URL to make the request to, e.g., "https://amazon.in/orders?q=abcd")_
