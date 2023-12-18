@@ -6,13 +6,14 @@ Designed to request proofs from the Reclaim protocol and manage the flow of clai
 
 - ### Reclaim Interface
 
-  - #### `requestProof(request: ProofRequest):`
+  - #### `requestProof(request: ProofRequest, AppCallbackUrl: string):`
 
     Requests proof using the provided proof request.
 
     **Parameters:**
 
     - `request`: ProofRequest (The proof request object)
+    - `AppCallbackUrl`: callback url which will receive the proof from AppClip/InstantApp
 
 - ### ProofRequest Interface
 
