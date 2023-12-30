@@ -23,15 +23,29 @@ Designed to request proofs from the Reclaim protocol and manage the flow of clai
   - **contextAddress?:** `string` - Context address for the proof request (can be zero address)
   - **requestorSignature?:** `string` - Signature of the requestor
 
-- ### ProviderV2 Interface:
+- ### Provider V2
 
-  - **headers?:** `Map<string, string>` _(Any additional headers to be sent with the request)_
-  - **url:** `string` _(URL to make the request to, e.g., "https://amazon.in/orders?q=abcd")_
-  - **method:** `'GET' | 'POST'` _(HTTP method)_
-  - **body?:** `string | Uint8Array` _(Body of the request, used only if the method is POST)_
-  - **responseRedactions:** `ResponseRedaction[]` _(Portions to select from a response for redaction)_
-  - **responseMatches:** `ResponseMatch[]` _(List to check that the redacted response matches provided strings/regexes)_
-  - **geoLocation?:** `string` \_(Geographical location from where to proxy the request)
+  - **name:** string
+  - **logoUrl:** string
+  - **url:** string
+  - **urlType:** string
+  - **Method:** GET | POST
+  - **Body:** Object | null
+  - **loginURL:** string
+  - **loginCookies:** string[]
+  - **loginHeaders:** string[]
+  - **isActive:** boolean
+  - **responseSelections:** Object[]
+    - JSON Path: string
+    - XPath: string
+    - Response Match: string
+  - **completedTrigger:** string
+  - **customInjection:** string
+  - **Body Sniff:** Object
+    - Enabled: false
+    - Regex: "(.\*?)"
+  - **userAgent:** string | null
+  - **isApproved:** boolean
 
 - ### ResponseRedaction Interface:
 
