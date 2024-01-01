@@ -1,15 +1,14 @@
-import { Linking } from 'expo';
+import * as Linking from 'expo-linking';
 
-import type { ProofRequest, ProviderV2, ResponseRedaction } from './interfaces';
-
-
+import type { ProofRequest } from './interfaces';
 
 class Reclaim {
   static async requestProof(request: ProofRequest, AppCallbackUrl: string) {
-
     // Simulate proof request with a deep link (replace this with your actual logic)
-    const deepLink = 'your_custom_deep_link_scheme://reclaim';
-    const deepLinkUrl = `${deepLink}?callbackUrl=${encodeURIComponent(AppCallbackUrl)}`;
+    const deepLink = 'reclaimprotocol://requestedproofs/';
+    const deepLinkUrl = `${deepLink}?callbackUrl=${encodeURIComponent(
+      AppCallbackUrl
+    )}&requestedproofs=${encodeURIComponent(JSON.stringify(request))}`;
 
     // Open the deep link
     const supported = await Linking.canOpenURL(deepLinkUrl);

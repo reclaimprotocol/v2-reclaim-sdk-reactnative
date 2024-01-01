@@ -2,14 +2,17 @@
   "name": "v2-reclaim-sdk-reactnative",
   "version": "0.1.0",
   "description": "Designed to request proofs from the Reclaim protocol and manage the flow of claims.",
-  "main": "lib/commonjs/index",
-  "module": "lib/module/index",
+  "main": "lib/commonjs/index.js",
+  "module": "lib/module/index.js",
   "types": "lib/typescript/src/index.d.ts",
-  "react-native": "src/index",
+  "react-native": "src/index.tsx",
   "source": "src/index",
   "files": [
     "src",
     "lib",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__",
     "android",
     "ios",
     "cpp",
@@ -20,9 +23,6 @@
     "!android/gradlew",
     "!android/gradlew.bat",
     "!android/local.properties",
-    "!**/__tests__",
-    "!**/__fixtures__",
-    "!**/__mocks__",
     "!**/.*"
   ],
   "scripts": {
@@ -32,7 +32,8 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli lib",
     "prepare": "bob build",
-    "release": "release-it"
+    "release": "release-it",
+    "prepack": "bob build"
   },
   "keywords": [
     "react-native",
@@ -66,10 +67,10 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^28.1.1",
-    "prettier": "^2.0.5",
+    "prettier": "^2.8.8",
     "react": "18.2.0",
     "react-native": "0.72.6",
-    "react-native-builder-bob": "^0.20.0",
+    "react-native-builder-bob": "^0.20.4",
     "release-it": "^15.0.0",
     "typescript": "^5.0.2"
   },
@@ -152,12 +153,10 @@
     "targets": [
       "commonjs",
       "module",
-      [
-        "typescript",
-        {
-          "project": "tsconfig.build.json"
-        }
-      ]
+      "typescript"
     ]
+  },
+  "dependencies": {
+    "expo-linking": "~5.0.2"
   }
 }

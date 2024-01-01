@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'v2-reclaim-sdk-reactnative';
+// import { Reclaim } from 'v2-reclaim-sdk-reactnative';
 
 export default function App() {
   const [result, setResult] = React.useState<number | undefined>();
 
   React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+    setResult(3 * 7);
   }, []);
 
   return (
