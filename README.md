@@ -91,7 +91,7 @@ npm install v2-reclaim-sdk-reactnative
 ## Create ProofRequest Example
 
 ```typescript
-const privateKey = 'YOUR_PRIVATE_KEY'
+const privateKey = 'YOUR_PRIVATE_KEY';
 
 const proofRequest: ProofRequest = {
   title: 'Example Proof Request',
@@ -112,20 +112,20 @@ const proofRequest: ProofRequest = {
   ],
   contextMessage: 'Please provide the necessary proofs for verification.',
   contextAddress: '0x0',
-}
+};
 
-const dataToSign = JSON.stringify(proofRequest)
+const dataToSign = JSON.stringify(proofRequest);
 
-const signature = signData(dataToSign, privateKey)
+const signature = signData(dataToSign, privateKey);
 
 const proofRequestWithSignature: ProofRequest = {
   ...proofRequestWithoutSensitiveHeaders,
   requestorSignature: signature,
-}
+};
 
 // Send the proof request to the AppClip/InstantApp
 // Verify the signature on the AppClip side
-const isSignatureValid = verifySignature(dataToSign, signature)
+const isSignatureValid = verifySignature(dataToSign, signature);
 ```
 
 ## License

@@ -1,9 +1,9 @@
 import * as React from 'react';
-
+import { registerRootComponent } from 'expo';
 import { StyleSheet, View, Text } from 'react-native';
 // import { Reclaim } from 'v2-reclaim-sdk-reactnative';
 
-export default function App() {
+function App() {
   const [result, setResult] = React.useState<number | undefined>();
 
   React.useEffect(() => {
@@ -29,3 +29,5 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
 });
+
+export default registerRootComponent(App);
