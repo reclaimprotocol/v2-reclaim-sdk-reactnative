@@ -33,16 +33,11 @@ const useReclaim = (): {
       // Handle the deep link URL received from the AppClip/InstantApp
       const receivedDeepLinkUrl = event.url;
 
-      // Check if this is the expected deep link
-      if (
-        receivedDeepLinkUrl.startsWith('reclaimprotocol://requestedproofs/')
-      ) {
-        // Extract parameters from the deep link URL as needed
-        const params = parse(receivedDeepLinkUrl);
+      // Extract parameters from the deep link URL as needed
+      const params = parse(receivedDeepLinkUrl);
 
-        // Update the state with the received parameters
-        setDeepLinkData(params);
-      }
+      // Update the state with the received parameters
+      setDeepLinkData(params);
     };
 
     // Add event listener for deep links
