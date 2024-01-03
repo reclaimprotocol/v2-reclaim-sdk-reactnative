@@ -119,17 +119,6 @@ npm install v2-reclaim-sdk-reactnative
   - **userAgent:** string | null
   - **isApproved:** boolean
 
-- ### ResponseRedaction Interface:
-
-  - **xPath?:** `string` _(XPath for HTML response)_
-  - **jsonPath?:** `string` _(JSONPath for JSON response)_
-  - **regex?:** `string` _(Regex for response matching)_
-
-- ### ResponseMatch Interface:
-
-  - **type:** `'regex' | 'contains'` _("regex" or "contains" indicating the matching type)_
-  - **value:** `string` _(The string/regex to match against)_
-
 ## Usage Flow
 
 <img src="./readme/usage-flow-2.svg">
