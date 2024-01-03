@@ -154,44 +154,45 @@ npm install v2-reclaim-sdk-reactnative
 
 - `UserCanceled`: The user canceled the proof request or submission process.
 
-## Create ProofRequest Example
+## Usage Example
+
+Here's a step-by-step guide on how to utilize the Reclaim ReactNative SDK v2 effectively without using the simplified `verify` function.
 
 ```typescript
 const privateKey = 'YOUR_PRIVATE_KEY'
 
+// Build HTTP providers by IDs
+const providerIds = ['id1', 'id2']
+const httpProviders = buildHttpProviderV2ByIds(providerIds)
+
+// Create a ProofRequest based on the obtained HTTP providers
 const proofRequest: ProofRequest = {
   title: 'Example Proof Request',
-  requestedProofs: [
-    {
-      url: 'https://api.example.com/data',
-      method: 'GET',
-      responseRedactions: [
-        { start: 10, end: 20 },
-        { start: 30, end: 40 },
-      ],
-      responseMatches: [
-        { type: 'string', value: 'important-data' },
-        { type: 'regex', pattern: '\\d{3}-\\d{2}-\\d{4}' },
-      ],
-      geoLocation: '37.7749,-122.4194',
-    },
-  ],
+  requestedProofs: httpProviders,
   contextMessage: 'Please provide the necessary proofs for verification.',
   contextAddress: '0x0',
+  appCallbackUrl: Linking.getInitialUrl(),
 }
 
-const dataToSign = JSON.stringify(proofRequest)
+// Sign the ProofRequest with the provided private key
+const proofRequestWithSignature = signProofRequest(proofRequest, privateKey)
 
-const signature = signData(dataToSign, privateKey)
+// Get the deep link to the AppClip/InstantApp with the request data
+const deepLink = requestProof(proofRequestWithSignature)
 
-const proofRequestWithSignature: ProofRequest = {
-  ...proofRequestWithoutSensitiveHeaders,
-  requestorSignature: signature,
-}
+// Register custom handlers for deep link events
+registerHandlers({
+  onSuccessCallback: proofs => {
+    console.log('Proofs received:', proofs)
+    // Perform actions on successful verification
+  },
+  onFailureCallback: error => {
+    console.error('Verification failed:', error)
+    // Perform actions on verification failure
+  },
+})
 
-// Send the proof request to the AppClip/InstantApp
-// Verify the signature on the AppClip side
-const isSignatureValid = verifySignature(dataToSign, signature)
+Linking.openURL(deepLink) // redirecting to the App Clip
 ```
 
 ## License
