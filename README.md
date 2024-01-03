@@ -12,14 +12,55 @@ npm install v2-reclaim-sdk-reactnative
 
 - ### Reclaim Interface
 
-  - #### `requestProof(request: ProofRequest, AppCallbackUrl: string):`
+  - #### `verify(options: VerifyOptions): void`
 
-    Requests proof using the provided proof request.
+    Verifies the proof request using specified options. This function will use `buildHttpProviderV2ByIds` first to get requestedProofs `ProviderV2[]`. After that, will build ProofRequest and sign it with the help of `signProofRequest`. Then, it will use `requestProof` to get Linking Url to App Clip/InstantApp. Define event listner to receive the proof from AppClip/InstantApp and invoke callbacks accordingly. This function will also handle the redirection to AppClip/InstantApp.
+
+    **Parameters:**
+
+    - `options`: VerifyOptions (Object containing verification options)
+
+  - #### `buildHttpProviderV2ByIds(providerIds: string[]): ProviderV2[]:`
+
+    Queries and returns an array of HTTP providers based on their IDs from Reclaim server.
+
+    **Parameters:**
+
+    - `providerIds`: string[] (Array of provider IDs to build HTTP providers)
+
+    **Returns:**
+
+    - `ProviderV2[]`: Array of built HTTP providers.
+
+  - #### `signProofRequest(request: ProofRequest, privateKey: string): ProofRequest`
+
+    Signs the given ProofRequest with the provided private key, mutating the ProofRequest with the valid signature, and returns the updated ProofRequest.
+
+    **Parameters**
+
+    - `request`: ProofRequest (The proof request object)
+    - `privateKey`: string (The private key for generating and verifying the signature)
+
+    **Returns**
+
+    - `ProofRequest`: The mutated `ProofRequest` with a valid signature
+
+  - #### `requestProof(request: ProofRequest): string`
+
+    Requests proof using the provided proof request. handles parsing the request to the deep link. returns a deep link as string to be used for redirection to AppClip/AppInstatnt later.
 
     **Parameters:**
 
     - `request`: ProofRequest (The proof request object)
-    - `AppCallbackUrl`: callback url which will receive the proof from AppClip/InstantApp
+
+- ### VerifyOptions Interface
+
+  - **providerIds**: Array of strings representing provider IDs used in the verification process.
+  - **onSuccessCallback**: Function that takes an array of proofs as a parameter, executed on successful verification.
+  - **onFailureCallback**: Optional function that takes an error as a parameter, executed on verification failure.
+  - **privateKey**: String representing the private key used for signature generation and verification.
+  - **contextAddress**: Optional string representing the context address for the proof request.
+  - **contextMessage**: Optional string representing the context message for the proof request.
 
 - ### ProofRequest Interface
 
@@ -28,6 +69,7 @@ npm install v2-reclaim-sdk-reactnative
   - **contextMessage?:** `string` - Context message for the proof request
   - **contextAddress?:** `string` - Context address for the proof request (can be zero address)
   - **requestorSignature?:** `string` - Signature of the requestor
+  - **appCallbackUrl**: `string` - callback url(deep link) which will receive the proof from AppClip/InstantApp
 
 - ### Provider V2
 
@@ -91,7 +133,7 @@ npm install v2-reclaim-sdk-reactnative
 ## Create ProofRequest Example
 
 ```typescript
-const privateKey = 'YOUR_PRIVATE_KEY';
+const privateKey = 'YOUR_PRIVATE_KEY'
 
 const proofRequest: ProofRequest = {
   title: 'Example Proof Request',
@@ -112,20 +154,20 @@ const proofRequest: ProofRequest = {
   ],
   contextMessage: 'Please provide the necessary proofs for verification.',
   contextAddress: '0x0',
-};
+}
 
-const dataToSign = JSON.stringify(proofRequest);
+const dataToSign = JSON.stringify(proofRequest)
 
-const signature = signData(dataToSign, privateKey);
+const signature = signData(dataToSign, privateKey)
 
 const proofRequestWithSignature: ProofRequest = {
   ...proofRequestWithoutSensitiveHeaders,
   requestorSignature: signature,
-};
+}
 
 // Send the proof request to the AppClip/InstantApp
 // Verify the signature on the AppClip side
-const isSignatureValid = verifySignature(dataToSign, signature);
+const isSignatureValid = verifySignature(dataToSign, signature)
 ```
 
 ## License
