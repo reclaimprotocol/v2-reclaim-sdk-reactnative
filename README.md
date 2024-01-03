@@ -14,7 +14,7 @@ npm install v2-reclaim-sdk-reactnative
 
   - #### `verify(options: VerifyOptions): void`
 
-    Verifies the proof request using specified options. This function will use `buildHttpProviderV2ByIds` first to get requestedProofs `ProviderV2[]`. After that, will build ProofRequest and sign it with the help of `signProofRequest`. Then, it will use `requestProof` to get Linking Url to App Clip/InstantApp. Define event listner to receive the proof from AppClip/InstantApp and invoke callbacks accordingly. This function will also handle the redirection to AppClip/InstantApp.
+    Verifies the proof request using specified options. This function will use `buildHttpProviderV2ByIds` first to get requestedProofs `ProviderV2[]`. After that, will build ProofRequest and sign it with the help of `signProofRequest`. Then, it will use `requestProof` to get Linking Url to App Clip/InstantApp. Define event listner to receive the proof from AppClip/InstantApp and invoke callbacks accordingly (use `registerHandlers`). Finally, This function will also handle the redirection to AppClip/InstantApp.
 
     **Parameters:**
 
@@ -53,6 +53,14 @@ npm install v2-reclaim-sdk-reactnative
 
     - `request`: ProofRequest (The proof request object)
 
+  - #### `registerHandlers(options: HandlersOptions): void`
+
+    Registers a custom event handler for deep link events. When a deep link is received, the registered handler will be invoked with the deep link URL.
+
+    **Parameters:**
+
+    - `options`: HandlersOptions (Object containing event handler options)
+
 - ### VerifyOptions Interface
 
   - **providerIds**: Array of strings representing provider IDs used in the verification process.
@@ -61,6 +69,22 @@ npm install v2-reclaim-sdk-reactnative
   - **privateKey**: String representing the private key used for signature generation and verification.
   - **contextAddress**: Optional string representing the context address for the proof request.
   - **contextMessage**: Optional string representing the context message for the proof request.
+
+- ### HandlersOptions Interface
+
+  The `HandlersOptions` interface defines the options that can be provided when registering custom event handlers for deep link events.
+
+  **Parameters**
+
+  - **onSuccessCallback (optional):**
+
+    - Type: `(proofs: Proof[]) => void`
+    - Description: A callback function that will be invoked when the deep link event is successful. It receives an array of proofs as a parameter.
+
+  - **onFailureCallback (optional):**
+
+    - Type: `(error: Error) => void`
+    - Description: A callback function that will be invoked when the deep link event encounters an error. It receives an `Error` object as a parameter.
 
 - ### ProofRequest Interface
 
