@@ -39,6 +39,9 @@ export const useReclaim = (): Reclaim => {
       onSuccessCallback: options.onSuccessCallback,
       onFailureCallback: options.onFailureCallback,
     });
+
+    const reclaimDeepLink = await requestProof(proofRequest);
+    openURL(reclaimDeepLink);
   };
 
   const buildHttpProviderV2ByIds = async (
@@ -99,16 +102,14 @@ export const useReclaim = (): Reclaim => {
 
   const requestProof = async (request: ProofRequest): Promise<string> => {
     const deepLink = 'reclaimprotocol://requestedproofs/';
-    const deepLinkUrl = `${deepLink}?callbackUrl=${encodeURIComponent(
-      request.appCallbackUrl
-    )}&requestedproofs=${encodeURIComponent(JSON.stringify(request))}`;
+    const deepLinkUrl = `${deepLink}?template=${encodeURIComponent(
+      JSON.stringify(request)
+    )}`;
 
     // Open the deep link
     const supported = await canOpenURL(deepLinkUrl);
 
-    if (supported) {
-      openURL(deepLinkUrl);
-    } else {
+    if (!supported) {
       console.error(`Deep linking is not supported for ${deepLink}`);
       throw new Error(`Deep linking is not supported for ${deepLink}`);
     }
