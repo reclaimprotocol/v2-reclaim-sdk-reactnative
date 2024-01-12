@@ -1,36 +1,3 @@
-export interface Reclaim {
-  verify(options: VerifyOptions): void;
-  buildHttpProviderV2ByIds(providerIds: string[]): Promise<ProviderV2[]>;
-  signProofRequest(request: ProofRequest, privateKey: string): ProofRequest;
-  requestProof(request: ProofRequest): Promise<string>;
-  registerHandlers(options: HandlersOptions): void;
-  deepLinkData: any;
-}
-
-export interface VerifyOptions {
-  title: string;
-  providerIds: string[];
-  onSuccessCallback: (proofs: Proof[]) => void;
-  onFailureCallback: (error: Error | unknown) => void;
-  privateKey: string;
-  contextAddress?: string;
-  contextMessage?: string;
-}
-
-export interface HandlersOptions {
-  onSuccessCallback: (proofs: Proof[]) => void;
-  onFailureCallback: (error: Error | unknown) => void;
-}
-
-export interface ProofRequest {
-  title: string;
-  requestedProofs: ProviderV2[];
-  contextMessage?: string;
-  contextAddress?: string;
-  requestorSignature?: string;
-  appCallbackUrl: string;
-}
-
 export interface ProviderV2 {
   id: string;
   name: string;
@@ -89,4 +56,54 @@ export interface ProviderClaimData {
    */
   identifier: string;
   epoch: number;
+}
+
+export interface RequestedProofs {
+  id: string;
+  sessionId: string;
+  name: string;
+  callbackUrl: string;
+  claims: RequestedClaim[];
+}
+export interface RequestedClaim {
+  provider: string;
+  context: string;
+  payload: Payload;
+}
+export interface Payload {
+  metadata: {
+    name: string;
+    logoUrl: string;
+  };
+  url: string;
+  urlType: 'CONSTANT' | 'REGEX';
+  method: 'GET' | 'POST';
+  login: {
+    url: string;
+  };
+  responseSelections: {
+    responseMatch: string;
+    xPath?: string;
+    jsonPath?: string;
+  }[];
+  templateClaimId: string;
+  parameters: {
+    [key: string]: string;
+  };
+  headers?: { [key: string]: string };
+  customInjection?: string;
+  bodySniff?: {
+    enabled: boolean;
+    regex?: string;
+  };
+  userAgent?: {
+    ios?: string;
+    android?: string;
+  };
+  useZk?: boolean;
+}
+
+export interface Context {
+  contextAddress: string;
+  contextMessage: string;
 }

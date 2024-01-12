@@ -1,1 +1,1 @@
-export { useReclaim } from './Reclaim';
+export { ReclaimClient } from './Reclaim';
