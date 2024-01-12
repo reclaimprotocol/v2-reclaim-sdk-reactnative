@@ -2,6 +2,7 @@ import { openURL, parse, addEventListener, getInitialURL } from 'expo-linking';
 import type { ProviderV2, Proof, RequestedProofs } from './interfaces';
 import type { Context } from './interfaces';
 import uuid from 'react-native-uuid';
+import { ethers } from 'ethers';
 
 export class ReclaimClient {
   applicationId: string;
@@ -129,6 +130,9 @@ export class ReclaimClient {
       const params = parse(receivedDeepLinkUrl) as unknown as Proof[];
       this.deepLinkData = params;
       if (this.verificationRequest?.onSuccessCallback) {
+        params.forEach((param) => {
+          this.verifySignedProof(param);
+        });
         this.verificationRequest?.onSuccessCallback(params);
       }
     } catch (e: Error | unknown) {
@@ -145,6 +149,23 @@ export class ReclaimClient {
       contextMessage: message,
     };
     return this.context;
+  }
+
+  verifySignedProof(proof: Proof) {
+    const identifier = calculateIdentifier(
+      proof.claimData.provider,
+      proof.claimData.parameters,
+      proof.claimData.owner,
+      proof.claimData.timestampS,
+      proof.claimData.context
+    );
+    if (proof.identifier !== identifier) {
+      throw new Error('Identifier Mismatch');
+    }
+    if (!proof.signatures.length) {
+      throw new Error('No signatures');
+    }
+    return true;
   }
 }
 
@@ -187,3 +208,17 @@ class ReclaimVerficationRequest {
     }
   }
 }
+
+const calculateIdentifier = (
+  provider: string,
+  parameters: string,
+  owner: string,
+  timestampS: number,
+  context: string
+) => {
+  const concatenatedString = `${provider}-${parameters}-${owner}-${timestampS}-${context}`;
+
+  const identifier = ethers.id(concatenatedString);
+
+  return identifier;
+};
