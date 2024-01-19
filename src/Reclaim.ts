@@ -1,49 +1,84 @@
-import { useState } from 'react';
+import type { ProviderV2, Proof, RequestedProofs, Context } from './interfaces';
+import { getIdentifierFromClaimInfo } from '@reclaimprotocol/witness-sdk';
+import type { QueryParams, SignedClaim } from './types';
+import uuid from 'react-native-uuid';
+import { ethers } from 'ethers';
+import { parse } from './utils';
+import { Linking } from 'react-native';
+import serialize from 'canonicalize';
 import {
-  openURL,
-  canOpenURL,
-  parse,
-  addEventListener,
-  getInitialURL,
-} from 'expo-linking';
-import type {
-  ProofRequest,
-  ProviderV2,
-  HandlersOptions,
-  VerifyOptions,
-  Reclaim,
-  Proof,
-} from './interfaces';
+  getWitnessesForClaim,
+  decodeContext,
+  encodeContext,
+  assertValidSignedClaim,
+} from './utils';
 
-export const useReclaim = (): Reclaim => {
-  const [deepLinkData, setDeepLinkData] = useState<Proof[] | null>(null);
+export class ReclaimClient {
+  applicationSecret: string;
+  appCallbackUrl?: string | null;
+  sessionId: string = '';
+  deepLinkData?: QueryParams | null;
+  context: Context = { contextAddress: '0x0', contextMessage: '' };
+  verificationRequest?: ReclaimVerficationRequest;
 
-  const verify = async (options: VerifyOptions) => {
-    const providers = await buildHttpProviderV2ByIds(options.providerIds);
-    const appCallbackUrl = await getInitialURL();
-    if (appCallbackUrl === null) {
+  constructor(applicationSecret: string, sessionId?: string) {
+    this.applicationSecret = applicationSecret;
+    if (sessionId) {
+      this.sessionId = sessionId;
+    } else {
+      this.sessionId = uuid.v4().toString();
+    }
+  }
+
+  async createVerificationRequest(providers: string[]) {
+    const appCallbackUrl = await this.getAppCallbackUrl();
+    const providersV2 = await this.buildHttpProviderV2ByName(providers);
+
+    const reclaimDeepLink = await this.createLinkRequest(providers);
+
+    this.verificationRequest = new ReclaimVerficationRequest(
+      providersV2,
+      appCallbackUrl,
+      reclaimDeepLink,
+      this.sessionId
+    );
+
+    this.registerHandlers();
+    return this.verificationRequest;
+  }
+
+  async createLinkRequest(providers: string[]) {
+    const appCallbackUrl = await this.getAppCallbackUrl();
+    const providersV2 = await this.buildHttpProviderV2ByName(providers);
+    const requestedProofs = await this.buildRequestedProofs(
+      providersV2,
+      appCallbackUrl
+    );
+    const deepLink = 'reclaimprotocol://requestedproofs/';
+    const deepLinkUrl = `${deepLink}?template=${encodeURIComponent(
+      JSON.stringify(requestedProofs)
+    )}`;
+    return deepLinkUrl;
+  }
+
+  setAppCallbackUrl(url: string) {
+    this.appCallbackUrl = url;
+  }
+
+  async getAppCallbackUrl() {
+    let appCallbackUrl = this.appCallbackUrl;
+    if (!appCallbackUrl) {
+      appCallbackUrl = await Linking.getInitialURL();
+    }
+    if (!appCallbackUrl) {
       throw new Error('Deep Link is not set');
     }
+    return appCallbackUrl;
+  }
 
-    const proofRequest: ProofRequest = {
-      title: options.title,
-      requestedProofs: providers,
-      contextMessage: options.contextMessage,
-      contextAddress: options.contextAddress,
-      appCallbackUrl: appCallbackUrl,
-    };
-
-    signProofRequest(proofRequest, options.privateKey);
-
-    registerHandlers({
-      onSuccessCallback: options.onSuccessCallback,
-      onFailureCallback: options.onFailureCallback,
-    });
-  };
-
-  const buildHttpProviderV2ByIds = async (
-    providerIds: string[]
-  ): Promise<ProviderV2[]> => {
+  async buildHttpProviderV2ByName(
+    providerNames: string[]
+  ): Promise<ProviderV2[]> {
     try {
       const reclaimServerUrl =
         'https://api.reclaimprotocol.org/get/httpsproviders';
@@ -56,7 +91,7 @@ export const useReclaim = (): Reclaim => {
       const providers = (await response.json()).providers as ProviderV2[];
 
       const filteredProviders = providers.filter((provider) => {
-        return providerIds.includes(provider.id);
+        return providerNames.includes(provider.name);
       });
 
       return filteredProviders;
@@ -64,85 +99,173 @@ export const useReclaim = (): Reclaim => {
       console.error('Error fetching HTTP providers:', error);
       throw error;
     }
-  };
+  }
 
-  const signProofRequest = (
-    request: ProofRequest,
-    privateKey: string
-  ): ProofRequest => {
+  buildRequestedProofs(
+    providers: ProviderV2[],
+    callbackUrl: string
+  ): RequestedProofs {
+    const claims = providers.map((provider) => {
+      return {
+        provider: provider.name,
+        context: JSON.stringify(this.context),
+        payload: {
+          metadata: {
+            name: provider.name,
+            logoUrl: provider.logoUrl,
+          },
+          url: provider.url,
+          urlType: provider.urlType,
+          method: provider.Method,
+          login: {
+            url: provider.logoUrl,
+          },
+          parameter: {},
+          responseSelections: provider.responseSelections,
+          templateClaimId: provider.id,
+          headers: provider.loginHeaders,
+          customInjection: provider.customInjection,
+          bodySniff: provider.bodySniff,
+          userAgent: provider.userAgent,
+        },
+      };
+    });
+
+    return {
+      id: uuid.v4().toString(),
+      sessionId: this.sessionId,
+      name: 'RN-SDK',
+      callbackUrl: callbackUrl,
+      //@ts-ignore
+      claims: claims,
+    };
+  }
+
+  registerHandlers() {
+    Linking.addEventListener('url', this.handleDeepLinkEvent.bind(this));
+  }
+
+  handleDeepLinkEvent(event: { url: string }) {
     try {
-      // Convert the private key to a Buffer (assuming it's in hexadecimal format)
-      const privateKeyBuffer = Buffer.from(privateKey, 'hex');
+      const receivedDeepLinkUrl = event.url;
+      const queryParams = parse(receivedDeepLinkUrl)?.queryParams;
 
-      // Serialize the request as a JSON string
-      const requestJson = JSON.stringify(request);
-
-      // Sign the request using a cryptographic library (e.g., Node.js crypto)
-      const crypto = require('crypto'); // Import the crypto library
-
-      const sign = crypto.createSign('sha256');
-      sign.update(requestJson);
-      sign.end();
-
-      // Sign the request using the private key
-      const signature = sign.sign(privateKeyBuffer, 'base64');
-
-      // Add the signature to the request
-      request.requestorSignature = signature;
-
-      return request;
-    } catch (error) {
-      console.error('Error signing proof request:', error);
-      throw error;
-    }
-  };
-
-  const requestProof = async (request: ProofRequest): Promise<string> => {
-    const deepLink = 'reclaimprotocol://requestedproofs/';
-    const deepLinkUrl = `${deepLink}?callbackUrl=${encodeURIComponent(
-      request.appCallbackUrl
-    )}&requestedproofs=${encodeURIComponent(JSON.stringify(request))}`;
-
-    // Open the deep link
-    const supported = await canOpenURL(deepLinkUrl);
-
-    if (supported) {
-      openURL(deepLinkUrl);
-    } else {
-      console.error(`Deep linking is not supported for ${deepLink}`);
-      throw new Error(`Deep linking is not supported for ${deepLink}`);
-    }
-
-    return deepLinkUrl;
-  };
-
-  const registerHandlers = (options: HandlersOptions) => {
-    const { onSuccessCallback, onFailureCallback } = options;
-
-    const handleDeepLink = (event: { url: string }) => {
-      try {
-        const receivedDeepLinkUrl = event.url;
-        const params = parse(receivedDeepLinkUrl) as unknown as Proof[];
-        setDeepLinkData(params);
-        if (onSuccessCallback !== undefined) {
-          onSuccessCallback(params);
-        }
-      } catch (e: Error | unknown) {
-        if (onFailureCallback !== undefined) {
-          onFailureCallback(e);
+      if (queryParams) {
+        this.deepLinkData = queryParams;
+        const proofs = (queryParams.proofs as unknown as Proof[]) ?? [];
+        if (this.verificationRequest?.onSuccessCallback) {
+          proofs.forEach((proof) => {
+            this.verifySignedProof(proof);
+          });
+          this.verificationRequest?.onSuccessCallback(proofs);
         }
       }
+    } catch (e: Error | unknown) {
+      if (this.verificationRequest?.onFailureCallback) {
+        this.verificationRequest?.onFailureCallback(e);
+      }
+    }
+  }
+
+  addContext(address: string, message: string) {
+    // TODO: sync data on backend
+    this.context = {
+      contextAddress: address,
+      contextMessage: message,
     };
+    return this.context;
+  }
 
-    addEventListener('url', handleDeepLink);
-  };
+  async verifySignedProof(proof: Proof) {
+    if (!proof.signatures.length) {
+      throw new Error('No signatures');
+    }
+    const witnesses = await getWitnessesForClaim(
+      proof.claimData.epoch,
+      proof.identifier,
+      proof.claimData.timestampS
+    );
 
-  return {
-    verify,
-    buildHttpProviderV2ByIds,
-    signProofRequest,
-    requestProof,
-    registerHandlers,
-    deepLinkData,
-  };
-};
+    try {
+      const signedClaim: SignedClaim = {
+        claim: {
+          ...proof.claimData,
+        },
+        signatures: proof.signatures.map((signature) => {
+          return ethers.getBytes(signature);
+        }),
+      };
+      // for proofs generated directly on the app, the context is empty
+      let encodedCtx = '';
+      if (proof.claimData.context) {
+        const decodedCtx = decodeContext(proof.claimData.context);
+        encodedCtx = encodeContext(
+          {
+            contextMessage: decodedCtx.contextMessage,
+            contextAddress: decodedCtx.contextAddress,
+          },
+          this.sessionId,
+          true
+        );
+      }
+      // then hash the claim info with the encoded ctx to get the identifier
+      const calculatedIdentifier = getIdentifierFromClaimInfo({
+        parameters: serialize(proof.claimData.parameters)!,
+        provider: proof.claimData.provider,
+        context: encodedCtx,
+      });
+      // check if the identifier matches the one in the proof
+      if (calculatedIdentifier !== proof.identifier) {
+        throw new Error('Identifier Mismatch');
+      }
+
+      // verify the witness signature
+      assertValidSignedClaim(signedClaim, witnesses);
+    } catch (e: Error | unknown) {
+      console.error(e);
+      return false;
+    }
+
+    return true;
+  }
+}
+
+class ReclaimVerficationRequest {
+  onSuccessCallback?: (data: Proof[] | Error | unknown) => void | unknown;
+  onFailureCallback?: (data: Proof[] | Error | unknown) => void | unknown;
+  providers: ProviderV2[];
+  appCallbackUrl: string;
+  reclaimDeepLink?: string;
+  sessionId?: string;
+
+  constructor(
+    providers: ProviderV2[],
+    appCallbackUrl: string,
+    reclaimDeepLink: string,
+    sessionId: string
+  ) {
+    this.providers = providers;
+    this.appCallbackUrl = appCallbackUrl;
+    this.reclaimDeepLink = reclaimDeepLink;
+    this.sessionId = sessionId;
+  }
+
+  on(
+    event: string,
+    callback: (data: Proof | Error | unknown) => void | unknown
+  ) {
+    if (event === 'success') {
+      this.onSuccessCallback = callback;
+    }
+    if (event === 'error') {
+      this.onFailureCallback = callback;
+    }
+    return this;
+  }
+
+  async start() {
+    if (this.reclaimDeepLink) {
+      await Linking.openURL(this.reclaimDeepLink);
+    }
+  }
+}
