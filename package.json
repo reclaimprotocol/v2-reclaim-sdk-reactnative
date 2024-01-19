@@ -7,6 +7,7 @@
   "types": "lib/typescript/src/index.d.ts",
   "react-native": "src/index.tsx",
   "source": "src/index",
+  "type": "module",
   "files": [
     "src",
     "lib",
@@ -33,7 +34,8 @@
     "clean": "del-cli lib",
     "prepare": "bob build",
     "release": "release-it",
-    "prepack": "bob build"
+    "prepack": "bob build",
+    "deb": "ts-node src/Reclaim"
   },
   "keywords": [
     "react-native",
@@ -60,10 +62,10 @@
     "@react-native/babel-preset": "^0.74.0",
     "@react-native/eslint-config": "^0.72.2",
     "@release-it/conventional-changelog": "^5.0.0",
-    "@testing-library/react-hooks": "^8.0.1",
     "@types/jest": "^28.1.2",
     "@types/react": "~18.2.14",
     "@types/react-native": "0.70.0",
+    "@types/url-parse": "^1.4.11",
     "commitlint": "^17.0.2",
     "del-cli": "^5.0.0",
     "eslint": "^8.4.1",
@@ -93,6 +95,7 @@
   },
   "jest": {
     "preset": "react-native",
+    "testEnvironment": "jsdom",
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
@@ -160,6 +163,10 @@
     ]
   },
   "dependencies": {
-    "expo-linking": "~5.0.2"
+    "canonicalize": "^2.0.0",
+    "ethers": "^6.9.2",
+    "react-native-uuid": "^2.0.1",
+    "url-parse": "^1.5.10",
+    "@reclaimprotocol/witness-sdk": "file:../witness-sdk"
   }
 }
