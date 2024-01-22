@@ -34,8 +34,7 @@
     "clean": "del-cli lib",
     "prepare": "bob build",
     "release": "release-it",
-    "prepack": "bob build",
-    "deb": "ts-node src/Reclaim"
+    "prepack": "bob build"
   },
   "keywords": [
     "react-native",
@@ -63,6 +62,7 @@
     "@react-native/eslint-config": "^0.72.2",
     "@release-it/conventional-changelog": "^5.0.0",
     "@types/jest": "^28.1.2",
+    "@types/qs": "^6.9.11",
     "@types/react": "~18.2.14",
     "@types/react-native": "0.70.0",
     "@types/url-parse": "^1.4.11",
@@ -164,10 +164,10 @@
     ]
   },
   "dependencies": {
+    "@reclaimprotocol/witness-sdk": "^0.0.1",
     "canonicalize": "^2.0.0",
     "ethers": "^6.9.2",
     "react-native-uuid": "^2.0.1",
-    "url-parse": "^1.5.10",
-    "@reclaimprotocol/witness-sdk": "file:../witness-sdk"
+    "url-parse": "^1.5.10"
   }
 }
