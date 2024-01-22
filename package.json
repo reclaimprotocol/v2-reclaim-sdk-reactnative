@@ -1,6 +1,6 @@
 {
   "name": "v2-reclaim-sdk-reactnative",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Designed to request proofs from the Reclaim protocol and manage the flow of claims.",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -112,7 +112,8 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true
+      "publish": true,
+      "tag": "beta"
     },
     "github": {
       "release": true
