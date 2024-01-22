@@ -112,7 +112,8 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true
+      "publish": true,
+      "tag": "beta"
     },
     "github": {
       "release": true
