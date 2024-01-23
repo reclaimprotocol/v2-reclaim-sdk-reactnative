@@ -9,15 +9,16 @@ import canonicalize from 'canonicalize';
 import { getWitnessesForClaim, assertValidSignedClaim } from './utils';
 
 export class ReclaimClient {
-  applicationSecret: string;
+  applicationId: string;
+  signature?: string;
   appCallbackUrl?: string | null;
   sessionId: string = '';
   deepLinkData?: QueryParams | null;
   context: Context = { contextAddress: '0x0', contextMessage: '' };
   verificationRequest?: ReclaimVerficationRequest;
 
-  constructor(applicationSecret: string, sessionId?: string) {
-    this.applicationSecret = applicationSecret;
+  constructor(applicationId: string, sessionId?: string) {
+    this.applicationId = applicationId;
     if (sessionId) {
       this.sessionId = sessionId;
     } else {
@@ -49,9 +50,22 @@ export class ReclaimClient {
       providersV2,
       appCallbackUrl
     );
+    if (!this.signature) {
+      throw new Error('Signature is not set');
+    }
+
+    const appId = ethers.recoverAddress(
+      ethers.getBytes(JSON.stringify(requestedProofs)),
+      this.signature
+    );
+
+    if (appId !== this.applicationId) {
+      throw new Error('Invalid signature');
+    }
+
     const deepLink = 'reclaimprotocol://requestedProofs';
     const deepLinkUrl = `${deepLink}/${encodeURIComponent(
-      JSON.stringify(requestedProofs)
+      JSON.stringify({ ...requestedProofs, signature: this.signature })
     )}`;
     return deepLinkUrl;
   }
@@ -69,6 +83,20 @@ export class ReclaimClient {
       throw new Error('Deep Link is not set');
     }
     return appCallbackUrl;
+  }
+
+  setSignature(signature: string) {
+    this.signature = signature;
+  }
+
+  // @dev Use this function only in development environments
+  async getSignature(
+    requestedProofs: RequestedProofs,
+    applicationSecret: string
+  ): Promise<string> {
+    const wallet = new ethers.Wallet(applicationSecret);
+    const signature = await wallet.signMessage(JSON.stringify(requestedProofs));
+    return signature;
   }
 
   async buildHttpProviderV2ByName(
@@ -140,7 +168,7 @@ export class ReclaimClient {
     Linking.addEventListener('url', this.handleDeepLinkEvent.bind(this));
   }
 
-  handleDeepLinkEvent(event: { url: string }) {
+  async handleDeepLinkEvent(event: { url: string }) {
     try {
       const receivedDeepLinkUrl = event.url;
       const res = parse(receivedDeepLinkUrl);
@@ -155,7 +183,10 @@ export class ReclaimClient {
         proof.signatures = JSON.parse(proof.signatures);
 
         if (this.verificationRequest?.onSuccessCallback) {
-          this.verifySignedProof(proof);
+          const verified = await this.verifySignedProof(proof);
+          if (!verified) {
+            throw new Error('Proof not verified');
+          }
           this.verificationRequest?.onSuccessCallback(proof);
         }
       }
