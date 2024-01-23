@@ -1,9 +1,8 @@
 import URL from 'url-parse';
 import type { ParsedURL, SignedClaim } from './types';
-import type { Context, WitnessData } from './interfaces';
+import type { WitnessData } from './interfaces';
 import { ethers } from 'ethers';
 import { makeBeacon } from './smart-contract';
-import canonicalize from 'canonicalize';
 import { fetchWitnessListForClaim, createSignDataForClaim } from './witness';
 
 /*
@@ -43,30 +42,6 @@ function validateURL(url: string): void {
   if (!url) {
     throw new Error(`Invalid URL: ${url}. URL cannot be empty`);
   }
-}
-
-/*
-    Context utils
-*/
-
-export function encodeContext(
-  ctx: Context,
-  sessionId: string,
-  fromProof: boolean
-): string {
-  const context = {
-    contextMessage: !fromProof
-      ? ethers.keccak256(ethers.toUtf8Bytes(ctx.contextMessage))
-      : ctx.contextMessage,
-    contextAddress: ctx.contextAddress,
-    sessionId: sessionId,
-  };
-  return canonicalize(context)!;
-}
-
-export function decodeContext(ctx: string): Context {
-  const context: Context = JSON.parse(ctx);
-  return context;
 }
 
 /*

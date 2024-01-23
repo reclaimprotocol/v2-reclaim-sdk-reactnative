@@ -5,13 +5,8 @@ import uuid from 'react-native-uuid';
 import { ethers } from 'ethers';
 import { parse } from './utils';
 import { Linking } from 'react-native';
-import serialize from 'canonicalize';
-import {
-  getWitnessesForClaim,
-  decodeContext,
-  encodeContext,
-  assertValidSignedClaim,
-} from './utils';
+import canonicalize from 'canonicalize';
+import { getWitnessesForClaim, assertValidSignedClaim } from './utils';
 
 export class ReclaimClient {
   applicationSecret: string;
@@ -156,6 +151,9 @@ export class ReclaimClient {
 
         //@ts-ignore
         proof.claimData = JSON.parse(proof.claimData);
+        //@ts-ignore
+        proof.signatures = JSON.parse(proof.signatures);
+
         if (this.verificationRequest?.onSuccessCallback) {
           this.verifySignedProof(proof);
           this.verificationRequest?.onSuccessCallback(proof);
@@ -188,6 +186,21 @@ export class ReclaimClient {
     );
 
     try {
+      // then hash the claim info with the encoded ctx to get the identifier
+      const calculatedIdentifier = getIdentifierFromClaimInfo({
+        parameters: JSON.parse(
+          canonicalize(proof.claimData.parameters) as string
+        ),
+        provider: proof.claimData.provider,
+        context: proof.claimData.context,
+      });
+      proof.identifier = proof.identifier.replace('"', '');
+      proof.identifier = proof.identifier.replace('"', '');
+      // check if the identifier matches the one in the proof
+      if (calculatedIdentifier !== proof.identifier) {
+        throw new Error('Identifier Mismatch');
+      }
+
       const signedClaim: SignedClaim = {
         claim: {
           ...proof.claimData,
@@ -196,29 +209,6 @@ export class ReclaimClient {
           return ethers.getBytes(signature);
         }),
       };
-      // for proofs generated directly on the app, the context is empty
-      let encodedCtx = '';
-      if (proof.claimData.context) {
-        const decodedCtx = decodeContext(proof.claimData.context);
-        encodedCtx = encodeContext(
-          {
-            contextMessage: decodedCtx.contextMessage,
-            contextAddress: decodedCtx.contextAddress,
-          },
-          this.sessionId,
-          true
-        );
-      }
-      // then hash the claim info with the encoded ctx to get the identifier
-      const calculatedIdentifier = getIdentifierFromClaimInfo({
-        parameters: serialize(proof.claimData.parameters)!,
-        provider: proof.claimData.provider,
-        context: encodedCtx,
-      });
-      // check if the identifier matches the one in the proof
-      if (calculatedIdentifier !== proof.identifier) {
-        throw new Error('Identifier Mismatch');
-      }
 
       // verify the witness signature
       assertValidSignedClaim(signedClaim, witnesses);
@@ -232,8 +222,8 @@ export class ReclaimClient {
 }
 
 class ReclaimVerficationRequest {
-  onSuccessCallback?: (data: Proof[] | Error | unknown) => void | unknown;
-  onFailureCallback?: (data: Proof[] | Error | unknown) => void | unknown;
+  onSuccessCallback?: (data: Proof | Error | unknown) => void | unknown;
+  onFailureCallback?: (data: Proof | Error | unknown) => void | unknown;
   providers: ProviderV2[];
   appCallbackUrl: string;
   reclaimDeepLink?: string;
