@@ -54,8 +54,8 @@ export class ReclaimClient {
       providersV2,
       appCallbackUrl
     );
-    const deepLink = 'reclaimprotocol://requestedproofs/';
-    const deepLinkUrl = `${deepLink}?template=${encodeURIComponent(
+    const deepLink = 'reclaimprotocol://requestedProofs';
+    const deepLinkUrl = `${deepLink}/${encodeURIComponent(
       JSON.stringify(requestedProofs)
     )}`;
     return deepLinkUrl;
@@ -118,7 +118,7 @@ export class ReclaimClient {
           urlType: provider.urlType,
           method: provider.Method,
           login: {
-            url: provider.logoUrl,
+            url: provider.loginUrl,
           },
           parameter: {},
           responseSelections: provider.responseSelections,
@@ -148,16 +148,17 @@ export class ReclaimClient {
   handleDeepLinkEvent(event: { url: string }) {
     try {
       const receivedDeepLinkUrl = event.url;
-      const queryParams = parse(receivedDeepLinkUrl)?.queryParams;
+      const res = parse(receivedDeepLinkUrl);
+      const proof = (res.queryParams as unknown as Proof) ?? null;
 
-      if (queryParams) {
-        this.deepLinkData = queryParams;
-        const proofs = (queryParams.proofs as unknown as Proof[]) ?? [];
+      if (!proof) {
+        this.deepLinkData = res.queryParams;
+
+        //@ts-ignore
+        proof.claimData = JSON.parse(proof.claimData);
         if (this.verificationRequest?.onSuccessCallback) {
-          proofs.forEach((proof) => {
-            this.verifySignedProof(proof);
-          });
-          this.verificationRequest?.onSuccessCallback(proofs);
+          this.verifySignedProof(proof);
+          this.verificationRequest?.onSuccessCallback(proof);
         }
       }
     } catch (e: Error | unknown) {

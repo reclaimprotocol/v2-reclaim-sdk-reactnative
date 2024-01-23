@@ -6,7 +6,7 @@ export interface ProviderV2 {
   urlType: string;
   Method: 'GET' | 'POST';
   Body: Object | null;
-  loginURL: string;
+  loginUrl: string;
   loginCookies: string[];
   loginHeaders: string[];
   isActive: boolean;
@@ -34,6 +34,7 @@ export interface Proof {
   claimData: ProviderClaimData;
   signatures: string[];
   witnesses: WitnessData[];
+  extractedParameterValues: any;
 }
 
 export interface WitnessData {
