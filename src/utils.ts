@@ -1,13 +1,10 @@
 import URL from 'url-parse';
 import type { ParsedURL, SignedClaim } from './types';
-import type { Context } from './interfaces';
+import type { Context, WitnessData } from './interfaces';
 import { ethers } from 'ethers';
+import { makeBeacon } from './smart-contract';
 import canonicalize from 'canonicalize';
-import {
-  fetchWitnessListForClaim,
-  makeBeacon,
-  createSignDataForClaim,
-} from '@reclaimprotocol/witness-sdk';
+import { fetchWitnessListForClaim, createSignDataForClaim } from './witness';
 
 /*
     URL utils
@@ -82,9 +79,10 @@ export async function getWitnessesForClaim(
   timestampS: number
 ) {
   const beacon = makeBeacon();
+  if (!beacon) throw new Error('No beacon');
   const state = await beacon.getState(epoch);
   const witnessList = fetchWitnessListForClaim(state, identifier, timestampS);
-  return witnessList.map((w) => w.id.toLowerCase());
+  return witnessList.map((w: WitnessData) => w.id.toLowerCase());
 }
 
 /*

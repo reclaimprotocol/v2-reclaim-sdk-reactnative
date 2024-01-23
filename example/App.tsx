@@ -5,6 +5,8 @@
  * @format
  */
 
+import {ReclaimClient} from './../src';
+
 import React from 'react';
 import type {PropsWithChildren} from 'react';
 import {
@@ -28,6 +30,9 @@ import {
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
+
+const reclaimClient = new ReclaimClient('1');
+reclaimClient.applicationSecret = '1';
 
 function Section({children, title}: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';

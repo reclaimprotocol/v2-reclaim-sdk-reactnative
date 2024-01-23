@@ -1,5 +1,5 @@
 import type { ProviderV2, Proof, RequestedProofs, Context } from './interfaces';
-import { getIdentifierFromClaimInfo } from '@reclaimprotocol/witness-sdk';
+import { getIdentifierFromClaimInfo } from './witness';
 import type { QueryParams, SignedClaim } from './types';
 import uuid from 'react-native-uuid';
 import { ethers } from 'ethers';
