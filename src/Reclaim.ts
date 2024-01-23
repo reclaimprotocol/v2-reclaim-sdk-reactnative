@@ -146,7 +146,7 @@ export class ReclaimClient {
       const res = parse(receivedDeepLinkUrl);
       const proof = (res.queryParams as unknown as Proof) ?? null;
 
-      if (!proof) {
+      if (proof) {
         this.deepLinkData = res.queryParams;
 
         //@ts-ignore
