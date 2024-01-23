@@ -167,6 +167,7 @@
     "canonicalize": "^2.0.0",
     "ethers": "^6.9.2",
     "react-native-uuid": "^2.0.1",
+    "text-encoding-polyfill": "^0.6.7",
     "url-parse": "^1.5.10"
   }
 }
