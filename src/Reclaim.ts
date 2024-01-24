@@ -14,6 +14,7 @@ export class ReclaimClient {
   appCallbackUrl?: string | null;
   sessionId: string = '';
   deepLinkData?: QueryParams | null;
+  requestedProofs?: RequestedProofs;
   context: Context = { contextAddress: '0x0', contextMessage: '' };
   verificationRequest?: ReclaimVerficationRequest;
 
@@ -46,18 +47,24 @@ export class ReclaimClient {
   async createLinkRequest(providers: string[]) {
     const appCallbackUrl = await this.getAppCallbackUrl();
     const providersV2 = await this.buildHttpProviderV2ByName(providers);
-    const requestedProofs = await this.buildRequestedProofs(
-      providersV2,
-      appCallbackUrl
-    );
+    if (!this.requestedProofs) {
+      await this.buildRequestedProofs(providersV2, appCallbackUrl);
+    }
+
     if (!this.signature) {
       throw new Error('Signature is not set');
     }
 
-    const appId = ethers.recoverAddress(
-      ethers.getBytes(JSON.stringify(requestedProofs)),
-      this.signature
-    );
+    const appId = ethers
+      .verifyMessage(
+        ethers.getBytes(
+          ethers.keccak256(
+            new TextEncoder().encode(canonicalize(this.requestedProofs)!)
+          )
+        ),
+        ethers.hexlify(this.signature)
+      )
+      .toLowerCase();
 
     if (appId !== this.applicationId) {
       throw new Error('Invalid signature');
@@ -65,7 +72,7 @@ export class ReclaimClient {
 
     const deepLink = 'reclaimprotocol://requestedProofs';
     const deepLinkUrl = `${deepLink}/${encodeURIComponent(
-      JSON.stringify({ ...requestedProofs, signature: this.signature })
+      JSON.stringify({ ...this.requestedProofs, signature: this.signature })
     )}`;
     return deepLinkUrl;
   }
@@ -95,7 +102,14 @@ export class ReclaimClient {
     applicationSecret: string
   ): Promise<string> {
     const wallet = new ethers.Wallet(applicationSecret);
-    const signature = await wallet.signMessage(JSON.stringify(requestedProofs));
+    const signature = await wallet.signMessage(
+      ethers.getBytes(
+        ethers.keccak256(
+          new TextEncoder().encode(canonicalize(requestedProofs)!)
+        )
+      )
+    );
+
     return signature;
   }
 
@@ -154,7 +168,7 @@ export class ReclaimClient {
       };
     });
 
-    return {
+    this.requestedProofs = {
       id: uuid.v4().toString(),
       sessionId: this.sessionId,
       name: 'RN-SDK',
@@ -162,6 +176,8 @@ export class ReclaimClient {
       //@ts-ignore
       claims: claims,
     };
+
+    return this.requestedProofs!;
   }
 
   registerHandlers() {
