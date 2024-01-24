@@ -24,7 +24,9 @@ type SectionProps = PropsWithChildren<{
   title: string;
 }>;
 
-const reclaimClient = new ReclaimClient('1');
+const reclaimClient = new ReclaimClient(
+  '0xa1da33c9ed80e050130abe3482bc05ae82dab512',
+);
 
 function Section({children, title}: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -52,11 +54,28 @@ function App(): React.JSX.Element {
   const [extracted, setExtracted] = React.useState<any>(null);
 
   useEffect(() => {
+    const getSignature = async () => {
+      const providerV2 = await reclaimClient.buildHttpProviderV2ByName([
+        'Steam Username V2',
+      ]);
+      const requestProofs = await reclaimClient.buildRequestedProofs(
+        providerV2,
+        'mychat://chat/',
+      );
+      const signature = await reclaimClient.getSignature(
+        requestProofs,
+        '0x016179b9820f8bb49972208e4ab4ef165bb57190888bff53e5f47c440696c13a',
+      );
+      return signature;
+    };
+
     const getVerificationReq = async () => {
       reclaimClient.setAppCallbackUrl('mychat://chat/');
+      reclaimClient.setSignature(await getSignature()); // in prod, getSignature will retrieve signature from backend
       const req = await reclaimClient.createVerificationRequest([
-        'Steam ID v2',
+        'Steam Username V2',
       ]);
+
       req.on('success', (data: Proof | unknown) => {
         if (data) {
           const proof = data as Proof;
@@ -80,7 +99,7 @@ function App(): React.JSX.Element {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
-        <Section title="RECLAIM SDK @0.1.4 Demo" />
+        <Section title="RECLAIM SDK @0.1.5 Demo" />
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
