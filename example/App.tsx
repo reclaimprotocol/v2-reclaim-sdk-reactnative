@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import {ReclaimClient} from 'v2-reactnative-reclaim-sdk';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-import {Proof} from 'v2-reactnative-reclaim-sdk/lib/typescript/src/interfaces';
+import type {Proof} from 'v2-reactnative-reclaim-sdk/lib/typescript/src/interfaces';
 
 type SectionProps = PropsWithChildren<{
   title: string;
