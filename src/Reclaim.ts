@@ -1,4 +1,10 @@
-import type { ProviderV2, Proof, RequestedProofs, Context } from './interfaces';
+import type {
+  ProviderV2,
+  Proof,
+  RequestedProofs,
+  Context,
+  RequestedClaim,
+} from './interfaces';
 import { getIdentifierFromClaimInfo } from './witness';
 import type { QueryParams, SignedClaim } from './types';
 import uuid from 'react-native-uuid';
@@ -146,26 +152,26 @@ export class ReclaimClient {
       return {
         provider: provider.name,
         context: JSON.stringify(this.context),
+        templateClaimId: provider.id,
         payload: {
           metadata: {
             name: provider.name,
             logoUrl: provider.logoUrl,
           },
           url: provider.url,
-          urlType: provider.urlType,
-          method: provider.Method,
+          urlType: provider.urlType as 'CONSTANT' | 'REGEX',
+          method: provider.method as 'GET' | 'POST',
           login: {
             url: provider.loginUrl,
           },
-          parameter: {},
+          parameters: {},
           responseSelections: provider.responseSelections,
-          templateClaimId: provider.id,
-          headers: provider.loginHeaders,
           customInjection: provider.customInjection,
           bodySniff: provider.bodySniff,
           userAgent: provider.userAgent,
+          useZk: true,
         },
-      };
+      } as RequestedClaim;
     });
 
     this.requestedProofs = {
@@ -173,7 +179,6 @@ export class ReclaimClient {
       sessionId: this.sessionId,
       name: 'RN-SDK',
       callbackUrl: callbackUrl,
-      //@ts-ignore
       claims: claims,
     };
 

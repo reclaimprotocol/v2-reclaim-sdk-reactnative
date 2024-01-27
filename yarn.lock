@@ -8286,7 +8286,7 @@ react-test-renderer@18.2.0:
     react-shallow-renderer "^16.15.0"
     scheduler "^0.23.0"
 
-"react@^16.0.0 || ^17.0.0 || ^18.0.0", react@^18.2.0, react@18.2.0:
+react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", react@^18.2.0, react@18.2.0:
   version "18.2.0"
   resolved "https://registry.npmjs.org/react/-/react-18.2.0.tgz"
   integrity sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==
@@ -9722,6 +9722,17 @@ utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/utils-merge/-/utils-merge-1.0.1.tgz"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
+
+v2-reactnative-reclaim-sdk@^0.1.6:
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/v2-reactnative-reclaim-sdk/-/v2-reactnative-reclaim-sdk-0.1.6.tgz"
+  integrity sha512-UYbCxbYVQ8uBLLO2l0YNEDLo2Mf8OaLFrTDxRZjpPQPHeVejsslymLbXZVNYLh/oU8F4TbOHg2Har151Xm80Kg==
+  dependencies:
+    canonicalize "^2.0.0"
+    ethers "^6.9.2"
+    react-native-uuid "^2.0.1"
+    text-encoding-polyfill "^0.6.7"
+    url-parse "^1.5.10"
 
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
