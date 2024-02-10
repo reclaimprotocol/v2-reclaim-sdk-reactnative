@@ -7,7 +7,7 @@ import type {
   RequestedProofs,
 } from 'v2-reactnative-reclaim-sdk/lib/typescript/src/interfaces';
 
-const APP_ID = '0xa1da33c9ed80e050130abe3482bc05ae82dab512';
+const APP_ID = '0x9B5fc54c81Af20687d9C83ff36FD8450dB812ba6';
 const reclaimClient = new ReclaimClient(APP_ID);
 
 function App(): React.JSX.Element {
@@ -16,16 +16,14 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     const getVerificationReq = async () => {
-      const providers = ['Steam Username V2'];
       const appDeepLink = 'mychat://chat/';
+      const providers = ['1bba104c-f7e3-4b58-8b42-f8c0346cdeab'];
       const PRIVATE_KEY =
-        '016179b9820f8bb49972208e4ab4ef165bb57190888bff53e5f47c440696c13a';
+        'f8dac75849b4f1d3b91a205ead2e7ee9b3116f01bc20d7a647cc026dbae1b979';
 
       reclaimClient.setAppCallbackUrl(appDeepLink);
 
-      const providerV2 = await reclaimClient.buildHttpProviderV2ByName(
-        providers,
-      );
+      const providerV2 = await reclaimClient.buildHttpProviderV2ByID(providers);
       const requestProofs = await reclaimClient.buildRequestedProofs(
         providerV2,
         appDeepLink,
@@ -64,7 +62,7 @@ function App(): React.JSX.Element {
 
   return (
     <SafeAreaView>
-      <Section title="RECLAIM SDK @0.1.6 Demo" />
+      <Section title="RECLAIM SDK @0.1.8 Demo" />
       <View>
         <Section title="Verify steam Username">
           <Pressable

@@ -84,7 +84,7 @@ export class ReclaimClient {
       )
       .toLowerCase();
 
-    if (appId !== this.applicationId) {
+    if (ethers.getAddress(appId) !== ethers.getAddress(this.applicationId)) {
       throw new Error('Invalid signature');
     }
 
@@ -219,7 +219,7 @@ export class ReclaimClient {
     this.requestedProofs = {
       id: uuid.v4().toString(),
       sessionId: this.sessionId,
-      name: 'web-SDK',
+      name: 'rn-SDK',
       callbackUrl: callbackUrl,
       claims: claims,
     };

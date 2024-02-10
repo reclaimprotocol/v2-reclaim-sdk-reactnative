@@ -4714,6 +4714,7 @@ event-target-shim@^5.0.0, event-target-shim@^5.0.1:
   dependencies:
     react "18.2.0"
     react-native "0.73.2"
+    v2-reactnative-reclaim-sdk "^0.1.7"
 
 execa@^4.0.3:
   version "4.1.0"
@@ -9723,10 +9724,10 @@ utils-merge@1.0.1:
   resolved "https://registry.npmjs.org/utils-merge/-/utils-merge-1.0.1.tgz"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
 
-v2-reactnative-reclaim-sdk@^0.1.6:
-  version "0.1.6"
-  resolved "https://registry.npmjs.org/v2-reactnative-reclaim-sdk/-/v2-reactnative-reclaim-sdk-0.1.6.tgz"
-  integrity sha512-UYbCxbYVQ8uBLLO2l0YNEDLo2Mf8OaLFrTDxRZjpPQPHeVejsslymLbXZVNYLh/oU8F4TbOHg2Har151Xm80Kg==
+v2-reactnative-reclaim-sdk@^0.1.7:
+  version "0.1.8"
+  resolved "https://registry.npmjs.org/v2-reactnative-reclaim-sdk/-/v2-reactnative-reclaim-sdk-0.1.8.tgz"
+  integrity sha512-7f1S4aJxEF4sjqTYXAQt0iqCXPyIRa4CY69G3buuoZc5IWSogHQ4hFf6x3ZBmAhAX9bdfaOfyzRkwkJPOrTREA==
   dependencies:
     canonicalize "^2.0.0"
     ethers "^6.9.2"
