@@ -1,2 +1,3 @@
 import 'text-encoding-polyfill';
-export { ReclaimClient } from './Reclaim';
+export * from './Reclaim';
+export * from './interfaces';
