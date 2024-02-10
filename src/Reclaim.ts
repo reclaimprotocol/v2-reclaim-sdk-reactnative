@@ -9,10 +9,21 @@ import { getIdentifierFromClaimInfo } from './witness';
 import type { QueryParams, SignedClaim } from './types';
 import uuid from 'react-native-uuid';
 import { ethers } from 'ethers';
-import { parse } from './utils';
+import { getShortenedUrl, parse } from './utils';
 import { Linking } from 'react-native';
 import canonicalize from 'canonicalize';
 import { getWitnessesForClaim, assertValidSignedClaim } from './utils';
+import { constants } from './constants';
+
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+function replaceAll(str: string, find: string, replace: string) {
+  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+}
+
+const RECLAIM_SHARE_URL =
+  'https://share.reclaimprotocol.org/instant/?template=';
 
 export class ReclaimClient {
   applicationId: string;
@@ -23,6 +34,7 @@ export class ReclaimClient {
   requestedProofs?: RequestedProofs;
   context: Context = { contextAddress: '0x0', contextMessage: '' };
   verificationRequest?: ReclaimVerficationRequest;
+  myProvidersList: ProviderV2[] = [];
 
   constructor(applicationId: string, sessionId?: string) {
     this.applicationId = applicationId;
@@ -35,7 +47,7 @@ export class ReclaimClient {
 
   async createVerificationRequest(providers: string[]) {
     const appCallbackUrl = await this.getAppCallbackUrl();
-    const providersV2 = await this.buildHttpProviderV2ByName(providers);
+    const providersV2 = await this.buildHttpProviderV2ByID(providers);
 
     const reclaimDeepLink = await this.createLinkRequest(providers);
 
@@ -52,7 +64,7 @@ export class ReclaimClient {
 
   async createLinkRequest(providers: string[]) {
     const appCallbackUrl = await this.getAppCallbackUrl();
-    const providersV2 = await this.buildHttpProviderV2ByName(providers);
+    const providersV2 = await this.buildHttpProviderV2ByID(providers);
     if (!this.requestedProofs) {
       await this.buildRequestedProofs(providersV2, appCallbackUrl);
     }
@@ -76,11 +88,15 @@ export class ReclaimClient {
       throw new Error('Invalid signature');
     }
 
-    const deepLink = 'reclaimprotocol://requestedProofs';
-    const deepLinkUrl = `${deepLink}/${encodeURIComponent(
-      JSON.stringify({ ...this.requestedProofs, signature: this.signature })
+    const templateData = { ...this.requestedProofs, signature: this.signature };
+    let template = `${RECLAIM_SHARE_URL}${encodeURIComponent(
+      JSON.stringify(templateData)
     )}`;
-    return deepLinkUrl;
+    template = replaceAll(template, '(', '%28');
+    template = replaceAll(template, ')', '%29');
+    template = await getShortenedUrl(template);
+
+    return template;
   }
 
   setAppCallbackUrl(url: string) {
@@ -119,27 +135,51 @@ export class ReclaimClient {
     return signature;
   }
 
-  async buildHttpProviderV2ByName(
-    providerNames: string[]
-  ): Promise<ProviderV2[]> {
-    try {
-      const reclaimServerUrl =
-        'https://api.reclaimprotocol.org/get/httpsproviders';
-      const response = await fetch(reclaimServerUrl);
+  async buildHttpProviderV2ByID(providerIds: string[]): Promise<ProviderV2[]> {
+    let appProviders: ProviderV2[] = [];
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch HTTP providers');
+    try {
+      if (providerIds.length === 0)
+        throw new Error(
+          'No provider Ids provided. Please pass at least one provider Id. Check https://dev.reclaimprotocol.org/applications for more details.'
+        );
+
+      if (this.myProvidersList.length > 0) {
+        appProviders = this.myProvidersList;
+      } else {
+        const appProvidersUrl = `${constants.GET_PROVIDERS_BY_ID_API}/${this.applicationId}`;
+        const appResponse = await fetch(appProvidersUrl);
+
+        if (!appResponse.ok) {
+          throw new Error('Failed to fetch HTTP providers');
+        }
+
+        try {
+          appProviders = (await appResponse.json()).providers
+            .httpProvider as ProviderV2[];
+        } catch (e) {
+          throw new Error('APP_ID is not valid! Please try again once more.');
+        }
       }
 
-      const providers = (await response.json()).providers as ProviderV2[];
-
-      const filteredProviders = providers.filter((provider) => {
-        return providerNames.includes(provider.name);
-      });
-
-      return filteredProviders;
+      for (let i = 0; i < providerIds.length; i++) {
+        const providerToAdd = appProviders.find((provider) => {
+          return provider.httpProviderId === providerIds[i];
+        });
+        if (!providerToAdd) {
+          throw new Error(
+            'Required provider Id ' +
+              providerIds[i] +
+              ' not register to the app make sure you are using the right providerId Available Provider Ids : ' +
+              appProviders.map((p) => p.httpProviderId).join(',')
+          );
+        }
+      }
+      return appProviders.filter((provider) =>
+        providerIds.includes(provider.httpProviderId)
+      );
     } catch (error) {
-      console.error('Error fetching HTTP providers:', error);
+      console.error(`Error fetching HTTP providers ${providerIds}:`, error);
       throw error;
     }
   }
@@ -150,13 +190,15 @@ export class ReclaimClient {
   ): RequestedProofs {
     const claims = providers.map((provider) => {
       return {
-        provider: provider.name,
+        provider: encodeURIComponent(provider.name),
         context: JSON.stringify(this.context),
         templateClaimId: provider.id,
         payload: {
           metadata: {
-            name: provider.name,
+            name: encodeURIComponent(provider.name),
             logoUrl: provider.logoUrl,
+            proofCardText: provider.proofCardText,
+            proofCardTitle: provider.proofCardTitle,
           },
           url: provider.url,
           urlType: provider.urlType as 'CONSTANT' | 'REGEX',
@@ -164,12 +206,12 @@ export class ReclaimClient {
           login: {
             url: provider.loginUrl,
           },
-          parameters: {},
           responseSelections: provider.responseSelections,
           customInjection: provider.customInjection,
           bodySniff: provider.bodySniff,
           userAgent: provider.userAgent,
-          useZk: true,
+          geoLocation: provider.geoLocation ? provider.geoLocation : '',
+          matchType: provider.matchType ? provider.matchType : 'greedy',
         },
       } as RequestedClaim;
     });
@@ -177,7 +219,7 @@ export class ReclaimClient {
     this.requestedProofs = {
       id: uuid.v4().toString(),
       sessionId: this.sessionId,
-      name: 'RN-SDK',
+      name: 'web-SDK',
       callbackUrl: callbackUrl,
       claims: claims,
     };
@@ -270,6 +312,20 @@ export class ReclaimClient {
     }
 
     return true;
+  }
+
+  async getMyProvidersList() {
+    if (this.myProvidersList.length > 0) return this.myProvidersList;
+
+    const appProvidersUrl = `${constants.GET_PROVIDERS_BY_ID_API}/${this.applicationId}`;
+    const appResponse = await fetch(appProvidersUrl);
+    if (!appResponse.ok) {
+      throw new Error('Failed to fetch HTTP providers');
+    }
+
+    this.myProvidersList = (await appResponse.json()).providers
+      .httpProvider as ProviderV2[];
+    return this.myProvidersList;
   }
 }
 

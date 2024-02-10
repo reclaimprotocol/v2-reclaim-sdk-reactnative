@@ -100,3 +100,25 @@ export function assertValidSignedClaim(
     );
   }
 }
+
+export async function getShortenedUrl(url: string) {
+  try {
+    const response = await fetch(
+      'https://api.reclaimprotocol.org/api/sdk/shortener',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullUrl: url,
+        }),
+      }
+    );
+    const res = await response.json();
+    const shortenedVerificationUrl = res.result.shortUrl;
+    return shortenedVerificationUrl;
+  } catch (err) {
+    return url;
+  }
+}
