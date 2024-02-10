@@ -52,7 +52,8 @@
   },
   "homepage": "https://github.com/reclaimprotocol/v2-reclaim-sdk-reactnative#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
